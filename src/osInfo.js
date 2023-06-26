@@ -46,7 +46,7 @@ const getUsernameInfo = () => {
 };
 
 const getArchitectureInfo = () => {
-    console.log(os.arch());
+  console.log(os.arch());
 };
 
 export { osInfo };
