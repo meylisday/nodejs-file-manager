@@ -2,6 +2,8 @@ import os from "os";
 import path from "path";
 import fs, { promises as fsPromises } from "fs";
 import { osInfo } from "./osInfo.js";
+import { compress } from "./compress.js";
+import { decompress } from "./decompress.js";
 import crypto from "crypto";
 
 const printCurrentWorkingDirectory = async () => {
@@ -201,6 +203,12 @@ const handleCommand = async (command, username) => {
       break;
     case "hash":
       await getFileHash(arg);
+      break;
+    case "compress":
+      await compress(sourcePath, destinationPath);
+      break;
+    case "decompress":
+      await decompress(sourcePath, destinationPath);
       break;
     default:
       console.log("Invalid input");
