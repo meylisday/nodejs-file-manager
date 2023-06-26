@@ -1,6 +1,8 @@
 import os from "os";
 import path from "path";
 import fs, { promises as fsPromises } from "fs";
+import { osInfo } from "./osInfo.js";
+import crypto from "crypto";
 
 const printCurrentWorkingDirectory = async () => {
   const cwd = process.cwd();
@@ -143,9 +145,22 @@ const renameFile = async (sourcePath, destinationPath) => {
   }
 };
 
+const getFileHash = async (filePath) => {
+  try {
+    const fullSourcePath = path.join(process.cwd(), filePath);
+    const fileBuffer = await fsPromises.readFile(fullSourcePath);
+    const hashSum = crypto.createHash("sha256");
+    hashSum.update(fileBuffer);
+    const hex = hashSum.digest("hex");
+    console.log(hex);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const handleCommand = async (command, username) => {
   const [cmd, ...args] = command.split(" ");
-  const [path] = args;
+  const [arg] = args.map((arg) => arg.replace(/^--/, ""));
   const [sourcePath, destinationPath] = args;
   switch (cmd) {
     case "exit":
@@ -158,19 +173,19 @@ const handleCommand = async (command, username) => {
       await goUpInDirectory();
       break;
     case "cd":
-      await changeDirectory(path);
+      await changeDirectory(arg);
       break;
     case "ls":
       await list();
       break;
     case "cat":
-      await readFile(path);
+      await readFile(arg);
       break;
     case "add":
-      await createFile(path);
+      await createFile(arg);
       break;
     case "rm":
-      await deleteFile(path);
+      await deleteFile(arg);
       break;
     case "rn":
       await renameFile(sourcePath, destinationPath);
@@ -180,6 +195,12 @@ const handleCommand = async (command, username) => {
       break;
     case "mv":
       await copyOrMoveFile(sourcePath, destinationPath, 'move');
+      break;
+    case "os":
+      await osInfo(arg);
+      break;
+    case "hash":
+      await getFileHash(arg);
       break;
     default:
       console.log("Invalid input");
