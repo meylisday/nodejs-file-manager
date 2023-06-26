@@ -4,13 +4,14 @@ import { osInfo } from "./osInfo.js";
 import { compress } from "./compress.js";
 import { decompress } from "./decompress.js";
 import { goUpInDirectory } from "./up.js";
-import { copyOrMoveFile } from "./copyAndMove.js";
 import { list } from "./list.js";
 import { read } from "./read.js";
 import { create } from "./create.js";
 import { deleteFile } from "./delete.js";
 import { rename } from "./rename.js";
 import { hash } from "./hash.js";
+import { copy } from "./copy.js";
+import { move } from "./move.js";
 
 const printCurrentWorkingDirectory = async () => {
   const cwd = process.cwd();
@@ -65,10 +66,10 @@ const handleCommand = async (command, username) => {
       await rename(sourcePath, destinationPath);
       break;
     case "cp":
-      await copyOrMoveFile(sourcePath, destinationPath, "copy");
+      await copy(sourcePath, destinationPath);
       break;
     case "mv":
-      await copyOrMoveFile(sourcePath, destinationPath, "move");
+      await move(sourcePath, destinationPath);
       break;
     case "os":
       await osInfo(arg);

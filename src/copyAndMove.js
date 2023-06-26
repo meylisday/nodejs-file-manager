@@ -1,10 +1,15 @@
 import path from "path";
-import fs, { promises as fsPromises } from "fs";
+import fs from "fs";
+import { promises as fsPromises } from "fs";
 
 const copyOrMoveFile = async (sourcePath, destinationPath, options) => {
   try {
     const fullSourcePath = path.join(process.cwd(), sourcePath);
-    const fullDestinationPath = path.join(process.cwd(), destinationPath);
+    const fullDestinationPath = path.join(
+      process.cwd(),
+      destinationPath,
+      path.basename(sourcePath)
+    );
 
     const source = fs.createReadStream(fullSourcePath);
     const destination = fs.createWriteStream(fullDestinationPath);
