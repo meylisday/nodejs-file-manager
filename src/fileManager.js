@@ -1,6 +1,6 @@
 import os from "os";
 import path from "path";
-import { promises as fsPromises } from "fs";
+import fs, { promises as fsPromises } from "fs";
 
 const printCurrentWorkingDirectory = async () => {
   const cwd = process.cwd();
@@ -28,7 +28,7 @@ const changeDirectory = async (directory) => {
   try {
     process.chdir(newDir);
   } catch (error) {
-    throw new Error("Operation failed");
+    console.error("Operation failed");
   }
 };
 
@@ -60,21 +60,93 @@ const list = async () => {
 
     console.table(fileData);
   } catch (error) {
-    throw new Error(error);
+    console.error("Operation failed");
   }
 };
 
 const readFile = async (filePath) => {
   try {
-    const content = await fsPromises.readFile(filePath, "utf8");
-    console.log(content);
+    const readableStream = fs.createReadStream(filePath, "utf8");
+
+    readableStream.on("data", function (chunk) {
+      process.stdout.write(`${chunk}\n`);
+    });
+
   } catch (error) {
-    throw new Error("Operation failed");
+    console.error(error);
+  }
+};
+
+const createFile = async (filename) => {
+  try {
+    await fsPromises.writeFile(filename, "");
+    console.log(`Empty file "${filename}" created successfully.`);
+  } catch (error) {
+    console.error("Operation failed");
+  }
+};
+
+const deleteFile = async (filePath) => {
+  try {
+    const fullFilePath = path.join(process.cwd(), filePath);
+    await fsPromises.rm(fullFilePath);
+    console.log(`File deleted successfully.`);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const copyOrMoveFile = async (sourcePath, destinationPath, options) => {
+  try {
+    const fullSourcePath = path.join(process.cwd(), sourcePath);
+    const fullDestinationPath = path.join(
+      process.cwd(),
+      destinationPath,
+      path.basename(sourcePath)
+    );
+
+    const source = fs.createReadStream(fullSourcePath);
+    const destination = fs.createWriteStream(fullDestinationPath);
+
+    source.pipe(destination);
+
+    source.on("error", (error) => {
+      console.error("Error reading the source file:", error);
+    });
+
+    destination.on("error", (error) => {
+      console.error("Error writing to the destination file:", error);
+    });
+
+    destination.on("finish", async () => {
+      console.log("File copied successfully.");
+      if (options === "move") {
+        try {
+          await fsPromises.unlink(fullSourcePath);
+          console.log("Source file deleted successfully.");
+        } catch (error) {
+          console.error("Error deleting the source file:", error);
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Operation failed");
+  }
+};
+
+const renameFile = async (sourcePath, destinationPath) => {
+  try {
+    await fsPromises.rename(sourcePath, destinationPath);
+    console.log("File renamed successfully!");
+  } catch (error) {
+    console.error("Operation failed");
   }
 };
 
 const handleCommand = async (command, username) => {
-  const [cmd, arg] = command.split(" ");
+  const [cmd, ...args] = command.split(" ");
+  const [path] = args;
+  const [sourcePath, destinationPath] = args;
   switch (cmd) {
     case "exit":
       await exitFileManager(username);
@@ -86,13 +158,28 @@ const handleCommand = async (command, username) => {
       await goUpInDirectory();
       break;
     case "cd":
-      await changeDirectory(arg);
+      await changeDirectory(path);
       break;
     case "ls":
       await list();
       break;
     case "cat":
-      await readFile(arg);
+      await readFile(path);
+      break;
+    case "add":
+      await createFile(path);
+      break;
+    case "rm":
+      await deleteFile(path);
+      break;
+    case "rn":
+      await renameFile(sourcePath, destinationPath);
+      break;
+    case "cp":
+      await copyOrMoveFile(sourcePath, destinationPath, 'copy');
+      break;
+    case "mv":
+      await copyOrMoveFile(sourcePath, destinationPath, 'move');
       break;
     default:
       console.log("Invalid input");
